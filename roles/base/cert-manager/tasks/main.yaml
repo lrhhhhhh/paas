@@ -1,0 +1,29 @@
+- name: uninstall previous installation 
+  shell: kubectl delete -k /cert-manager/overlays/prod && kubectl delete all --all --force -n cert-manager
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+  ignore_errors: true
+  when: uninstall == true
+
+- name: copy cert-manager kustomize project to remote host
+  copy:
+    src: "{{role_path}}/files/cert-manager"
+    dest: /
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: apply 
+  shell: cd /cert-manager && kubectl apply -k overlays/prod 
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: wait for pods to come up
+  shell: kubectl get pods -o json -n cert-manager
+  register: kubectl_get_pods
+  until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]  # need to pip3 install jmespath
+
+- name: Create cluster isssuer
+  shell: kubectl apply -f /cert-manager/cluster-issuer.yaml
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"

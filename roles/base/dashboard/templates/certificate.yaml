@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: k8s-dashboard-tls-certificate
+  namespace: kubernetes-dashboard
+spec:
+  dnsNames:
+    - dashboard.{{host}} 
+  secretName: dashboard-tls 
+  issuerRef:
+    name: letsencrypt-prod 
+    kind: ClusterIssuer
+
+    group: cert-manager.io  
+  isCA: true
+  commonName: SelfSignedCA
+  privateKey:
+    algorithm: ECDSA
+    size: 256

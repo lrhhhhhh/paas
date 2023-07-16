@@ -1,0 +1,28 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    logs:
+      general:
+        level: {{log_level}}
+      access:
+        enabled: true
+        # format: json
+
+    {% if certResolver == "enable" %}
+    
+    certResolvers:
+      le:
+        email: {{email}}
+        tlsChallenge: true 
+        storage: /data/acme.json  
+    {% endif %}
+
+    service:
+      spec:
+        externalTrafficPolicy: Local
+    persistence:
+      enabled: true

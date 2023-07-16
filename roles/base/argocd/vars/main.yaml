@@ -1,0 +1,11 @@
+# inject from shell 
+host: lab.com   
+
+# public or private
+# `true` for public ip and hostname
+# `false` for local private network homelab
+public: true
+
+
+# uninstall previous installation
+uninstall: false

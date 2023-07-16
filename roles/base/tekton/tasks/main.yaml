@@ -1,0 +1,53 @@
+- name: Copy tekton kustomize proj to remote 
+  copy:
+    src: "{{role_path}}/files/tekton"
+    dest: /
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Generate ingress route yaml
+  template: 
+    src: "{{role_path}}/templates/ingressroute.yaml"
+    dest: /tekton
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Generate certificate if in local private network
+  template: 
+    src: "{{role_path}}/templates/certificate.yaml"
+    dest: /tekton
+    owner: root
+    group: root
+    mode: '0644' 
+
+- name: Apply tekton
+  shell: kubectl apply -k /tekton/overlays/prod
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: Wati for cert-manager 
+  shell: kubectl get pods -o json -n cert-manager
+  register: result
+  until: result.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]  # need to pip3 install jmespath
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: Apply certificate
+  shell: kubectl apply -f /tekton/certificate.yaml  
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: Wait tekton 
+  shell: kubectl get pods -o json -n tekton-pipelines
+  register: result
+  until: result.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]  # need to pip3 install jmespath
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: Apply ingress route
+  shell: kubectl apply -f /tekton/ingressroute.yaml
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+

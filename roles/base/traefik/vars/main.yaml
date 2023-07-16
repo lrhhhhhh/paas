@@ -1,0 +1,4 @@
+log_level: DEBUG
+# enable or disable
+certResolver: "enable"
+email: name@example.com

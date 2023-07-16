@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sandbox
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: sandbox
+spec:
+  selfSigned: {}  # 指定这是自签名
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-cluster-issuer
+spec:
+  selfSigned: {} #指定这是自签名
+
+--- 
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: self-signed-ca
+  namespace: sandbox
+  labels:
+    app: self-signed-ca
+spec:
+  secretName: self-signed-ca
+  duration: 43800h # 5y
+  issuerRef:
+    name: selfsigned-issuer
+  commonName: "ca.example.com"
+  isCA: true
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: example-com-ca
+  namespace: sandbox
+  labels:
+    app: example-com-ca
+spec:
+  ca:
+    secretName: self-signed-ca
+
+--- 
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: www-example-com-tls
+  namespace: sandbox
+  labels:
+    app: www-example-com
+spec:
+  secretName: www-example-com-tls
+  duration: 8760h # 1y
+  issuerRef:
+    name: example-com-ca
+  commonName: "www.lab.com"
+  dnsNames:
+  - lab.com
+  - www.lab.com

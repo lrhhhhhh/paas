@@ -1,0 +1,94 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirectscheme
+  namespace: tekton-pipelines
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: tekton-http
+  namespace: tekton-pipelines
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`tekton.{{host}}`)
+      services:
+        - kind: Service
+          name: tekton-dashboard
+          port: 9097
+      middlewares:
+        - name: tekton-pipelines-redirectscheme@kubernetescrd
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: tlsoptions
+  namespace: tekton-pipelines
+spec:
+  minVersion: VersionTLS12
+  cipherSuites:
+    - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+    - TLS_AES_256_GCM_SHA384
+    - TLS_AES_128_GCM_SHA256
+    - TLS_CHACHA20_POLY1305_SHA256
+    - TLS_FALLBACK_SCSV
+  curvePreferences:
+    - CurveP521
+    - CurveP384
+  sniStrict: true
+
+
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: tekton-https
+  namespace: tekton-pipelines
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`tekton.{{host}}`)
+      services:
+        - name: tekton-dashboard
+          port: 9097
+    - kind: Rule
+      match: Host(`tekton.{{host}}`)
+      services:
+        - name: tekton-dashboard
+          port: 80
+  tls:
+    {% if public %}
+
+    certResolver: le
+    domains:
+      - main: {{host}} 
+        sans:
+          - tekton.{{host}}
+    options:
+      name: tlsoptions
+    
+    {% else %}
+
+    secretName: tekton-cert
+
+    {% endif %}
+

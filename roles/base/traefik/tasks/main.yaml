@@ -1,0 +1,13 @@
+- name: Generate traefik HelmChartConfig 
+  template:
+    src: "{{role_path}}/templates/traefikHelmChartConfig.yaml"
+    dest: /traefikHelmChartConfig.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: apply traefik HelmChartConfig
+  shell: kubectl apply -f /traefikHelmChartConfig.yaml
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+

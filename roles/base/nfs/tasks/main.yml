@@ -1,0 +1,38 @@
+---
+- name: check nfs-utils
+  stat:
+    path: /usr/sbin/rpc.nfsd
+  register: nfs_installed
+
+- name: Enable NFS service
+  become: true
+  systemd:
+    name: nfs
+    enabled: yes
+    state: started
+
+- name: debug
+  debug:
+    msg: "nfs already installed"
+  when: nfs_installed.stat.exists == True
+
+- name: install nfs
+  yum:
+    name: nfs-utils
+    state: present
+  when: nfs_installed.stat.exists == False
+
+- name: create export directory
+  become: true
+  file:
+    path: /mnt/nfs
+    mode: "0777"
+    state: directory
+
+- name: configure nfs exports (注意安全和权限)
+  lineinfile:
+    path: /etc/exports
+    line: "/mnt/nfs *(insecure,rw,sync,root_squash)"
+    state: present
+  notify:
+    - restart nfs

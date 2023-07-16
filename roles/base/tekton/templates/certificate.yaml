@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tekton-cert 
+  namespace: tekton-pipelines
+spec:
+  dnsNames:
+    - tekton.{{host}} 
+  secretName: tekton-cert 
+  issuerRef:
+    name: letsencrypt-prod 
+    kind: ClusterIssuer
+
+    group: cert-manager.io  
+  isCA: true
+  commonName: SelfSignedCA
+  privateKey:
+    algorithm: ECDSA
+    size: 256

@@ -1,0 +1,16 @@
+[k8s_master]
+master ansible_host=192.168.0.171 ansible_user=vagrant
+
+[k8s_slave]
+slave1 ansible_host=192.168.0.172
+slave2 ansible_host=192.168.0.173
+
+[all:vars]
+ansible_user=root
+ansible_ssh_private_key_file=~/.ssh/id_rsa 
+
+[nfs]
+nfs_node_1 ansible_host=192.168.0.171
+
+[k8s_control]
+k8s_control_plane_node_1 ansible_host=192.168.0.171 ansible_user=vagrant

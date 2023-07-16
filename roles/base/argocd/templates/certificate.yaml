@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-certificate
+  namespace: argocd 
+spec:
+  dnsNames:
+    - argocd.{{host}} 
+  secretName: argocd-tls 
+  issuerRef:
+    name: letsencrypt-prod 
+    kind: ClusterIssuer
+
+    group: cert-manager.io  
+  isCA: true
+  commonName: SelfSignedCA
+  privateKey:
+    algorithm: ECDSA
+    size: 256

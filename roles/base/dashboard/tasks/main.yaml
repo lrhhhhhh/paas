@@ -1,0 +1,41 @@
+- name: uninstall previous installation
+  shell: kubectl delete all --all --force -n kubernetes-dashboard && kubectl delete -k /dashboard/overlays/prod
+  ignore_errors: true
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+  when: uninstall == true
+
+- name: Copy the kustomize project of dashboard to remote host
+  copy:
+    src: "{{role_path}}/files/dashboard"
+    dest: /
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Generate Certificate
+  template:
+    src: "{{role_path}}/templates/certificate.yaml"
+    dest: /dashboard
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Generate ingressroute 
+  template:
+    src: "{{role_path}}/templates/ingressroute.yaml"
+    dest: /dashboard
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: apply Deployment and Service 
+  shell: cd /dashboard && kubectl apply -k overlays/prod 
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: apply certificate and ingressroute
+  shell: cd /dashboard && kubectl apply -f certificate.yaml && kubectl apply -f ingressroute.yaml
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+

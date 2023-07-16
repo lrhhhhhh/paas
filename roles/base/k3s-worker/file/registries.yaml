@@ -1,0 +1,11 @@
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://docker.mirrors.ustc.edu.cn/"
+      - "http://registry.localhost"
+      - "https://registry-1.docker.io"
+configs:
+  "registry.localhost":
+    auth:
+      username: testuser
+      password: testpassword

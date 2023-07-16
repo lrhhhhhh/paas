@@ -1,0 +1,97 @@
+{% if protocol == 'https' %}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirectscheme
+  namespace: registry
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+{% endif %}
+
+--- 
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: registry-http
+  namespace: registry
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`registry.{{host}}`)
+      services:
+        - kind: Service
+          name: registry
+          port: 5000
+      {% if protocol == 'https' %}
+      middlewares:
+        - name: registry-redirectscheme@kubernetescrd
+
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: traefik-servers-transport
+  namespace: registry
+spec:
+  serverName: "test"
+  insecureSkipVerify: true
+
+--- 
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: registry-https
+  namespace: registry
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`registry.liuronghao.com`) && PathPrefix(`/`)
+      services:
+        - kind: Service
+          name: registry
+          port: 5000
+          scheme: https
+          serversTransport: traefik-servers-transport
+  tls:
+    certResolver: le
+    domains:
+      - main: liuronghao.com
+        sans:
+          - registry.liuronghao.com
+    options:
+      name: tlsoptions
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: tlsoptions
+  namespace: registry
+spec:
+  minVersion: VersionTLS12
+  cipherSuites:
+    - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+    - TLS_AES_256_GCM_SHA384
+    - TLS_AES_128_GCM_SHA256
+    - TLS_CHACHA20_POLY1305_SHA256
+    - TLS_FALLBACK_SCSV
+  curvePreferences:
+    - CurveP521
+    - CurveP384
+  sniStrict: true
+
+
+{% endif %}

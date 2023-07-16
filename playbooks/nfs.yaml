@@ -1,0 +1,4 @@
+---
+- hosts: nfs_node_1
+  roles:
+    - base/nfs

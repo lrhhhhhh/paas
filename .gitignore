@@ -1,0 +1,3 @@
+roles/base/k3s-worker/file/k3s-v1.26.4+k3s1
+roles/base/k3s-worker/file/k3s-airgap-images-amd64.tar.gz
+log

@@ -1,0 +1,8 @@
+host: lab.com
+
+# http or https
+protocol: https
+
+htpasswd: <generate by htpasswd>
+
+uninstall: false

@@ -1,0 +1,52 @@
+- name: uninstall previous version
+  shell: kubectl delete -k /argocd/overlays/prod && kubectl delete -f /argocd/ingressroute.yaml
+  ignore_errors: true
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+  when: uninstall == true
+
+- name: copy kustomize proj to remote host
+  copy:
+    src: "{{role_path}}/files/argocd"
+    dest: /
+    owner: root
+    group: root
+    mode: '0644'
+    force: true
+- name: install argocd 
+  shell: kubectl apply -k /argocd/overlays/prod
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: generate traefik ingress route yaml
+  template:
+    src: "{{role_path}}/templates/ingressroute.yaml.j2"
+    dest: /argocd/ingressroute.yaml
+    owner: root
+    group: root
+    mode: '0644'  
+
+- name: Generate certificate yaml file
+  template: 
+    src: "{{role_path}}/templates/certificate.yaml"
+    dest: /argocd/certificate.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  when: public == false
+
+- name: Create certificate
+  shell: kubectl apply -f /argocd/certificate.yaml
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+  when: public == false
+
+- name: configure traefik ingress route 
+  shell: cd /argocd && kubectl apply -f ingressroute.yaml
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+
+- name: restart argocd 
+  shell: kubectl -n argocd rollout restart deployment argocd-server
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"

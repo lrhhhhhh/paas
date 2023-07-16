@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patchesStrategicMerge:
+  - argocd-cmd-params-cm.yaml
+# patches:
+#   - target:
+#       kind: IngressRoute
+#       name: argocd-http
+#     patch: |-
+#       - op: replace
+#         path: /spec/rules/0/host
+#         value: the.real.hostname
+#   - target:
+#       kind: IngressRoute
+#       name: argocd-https
+#     patch: |-
+#       - op: replace
+#         path: /spec/rules/0/host
+#         value: the.real.hostname

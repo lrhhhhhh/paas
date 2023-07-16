@@ -1,0 +1,8 @@
+---
+- hosts: master
+  vars:
+    - certResolver: "disable"
+  roles:
+    - base/k3s-worker
+    - base/traefik 
+    - base/cert-manager

@@ -1,0 +1,59 @@
+- name: uninstall previous version
+  shell: kubectl delete all --all --force -n registry
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin" 
+
+- name: Create directory for pv 
+  file: 
+    path: /mnt/registry
+    owner: root
+    group: root
+    mode: '0644'
+    state: directory
+
+- name: Create directory for yaml file
+  file: 
+    path: /registry
+    owner: root
+    group: root
+    mode: '0644'
+    state: directory
+
+- name: Copy namespace.yaml
+  copy:
+    src: "{{role_path}}/files/namespace.yaml"
+    dest: /registry
+    owner: root
+    group: root
+    mode: '0644'
+
+# - name: Get tls.key and tls.cert from traefik pod 
+#   shell: kubectl exec -it 
+#   when: protocol == 'https'
+#   register: result
+- name: Generate secret.yaml
+  template:
+    owner: root
+    group: root
+    mode: '0644'
+    src: "{{role_path}}/templates/secret.yaml.j2"
+    dest:  /registry/secret.yaml
+- name: Generate registry.yaml
+  template:
+    owner: root
+    group: root
+    mode: '0644'
+    src: "{{role_path}}/templates/registry.yaml.j2"
+    dest:  /registry/registry.yaml
+- name: Generate ingressroute.yaml
+  template:
+    owner: root
+    group: root
+    mode: '0644'
+    src: "{{role_path}}/templates/ingressroute.yaml.j2"
+    dest:  /registry/ingressroute.yaml
+
+- name: Apply 
+  shell: cd /registry && kubectl apply -f namespace.yaml && kubectl apply -f secret.yaml && kubectl apply -f registry.yaml && kubectl apply -f ingressroute.yaml 
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin" 

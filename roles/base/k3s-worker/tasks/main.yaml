@@ -1,0 +1,80 @@
+---
+- name: Check if the k3s binary exists 
+  stat:
+    path: /usr/local/bin/k3s
+  register: k3s_exists
+
+- name: copy k3s binary to remote host
+  copy:
+    src: "{{role_path}}/file/k3s-v1.26.4+k3s1"
+    dest: /usr/local/bin/k3s
+    owner: root
+    group: root 
+    mode: '0744'
+  when: k3s_exists.stat.exists == False
+
+- name: Check if k3s images exists 
+  stat:
+    path: /var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar
+  register: images_exists
+
+- name: copy k3s images to remote host
+  copy:
+    src: "{{role_path}}/file/k3s-airgap-images-amd64.tar.gz"
+    dest: /var/lib/rancher/k3s/agent/images/ 
+    owner: root
+    group: root 
+    mode: '0644'
+  when: images_exists.stat.exists == False
+
+- name: convert .tar.gz to .tar
+  shell: gzip -d /var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar.gz 
+  when: images_exists.stat.exists == False
+
+
+- name: Check if install.sh exists
+  stat:
+    path: /install.sh 
+  register: sh_exists
+
+- name: copy install.sh to remote host
+  copy: 
+    src: "{{role_path}}/file/install.sh"
+    dest: "/"
+    owner: root
+    group: root
+    mode: '0744'
+  when: sh_exists.stat.exists == False 
+
+- name: Copy registries.yaml to remote host
+  copy: 
+    src: "{{role_path}}/file/registries.yaml"
+    dest: /etc/rancher/k3s/ 
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install container-selinux
+  shell: yum install -y container-selinux selinux-policy-base && yum install -y https://rpm.rancher.io/k3s/latest/common/centos/7/noarch/k3s-selinux-0.2-1.el7_8.noarch.rpm
+  register: result
+  ignore_errors: true
+
+# - name: Check if k3s is Running
+#   systemd:
+#     name: k3s
+#     state: started
+#   register: k3s_status
+#   ignore_errors: true
+
+- name: Populate service facts
+  service_facts:
+
+# - name: Print service facts
+#   ansible.builtin.debug:
+#     var: ansible_facts.services
+
+
+- name: execute install.sh to install k3s
+  shell: INSTALL_K3S_VERSION=v1.26.4+k3s1 INSTALL_K3S_SKIP_DOWNLOAD=true /install.sh
+  # when: k3s_status.status.ActiveState != 'active'
+  when: "'k3s.service' not in ansible_facts.services"
